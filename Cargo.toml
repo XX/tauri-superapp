@@ -1,0 +1,23 @@
+[workspace]
+resolver = "2"
+members = [
+    "superapp",
+    "main",
+    "wapp_a",
+]
+
+[profile.release]
+lto = true
+
+[workspace.dependencies]
+console_error_panic_hook = "0.1"
+console_log = "1.0"
+derive_more = { version = "1.0", features = ["from", "display", "deref", "deref_mut"] }
+leptos = { version = "0.7", features = ["csr"] }
+log = "0.4"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_with = { version = "3.11", default-features = false, features = ["alloc", "json", "macros"] }
+strum = { version = "0.26", features = ["derive"] }
+thiserror = "2.0"
+tokio = { version = "1.42", features = ["full"] }

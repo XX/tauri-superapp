@@ -1,0 +1,13 @@
+[package]
+name = "tauri-superapp-main"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+console_error_panic_hook = { workspace = true }
+js-sys = "0.3"
+leptos = { workspace = true }
+serde = { workspace = true }
+serde-wasm-bindgen = "0.6"
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"

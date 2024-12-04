@@ -1,0 +1,152 @@
+[config]
+default_to_workspace = false
+additional_profiles = ["debug"]
+skip_core_tasks = true
+
+
+[env]
+APP_NAME = "tauri-superapp"
+OUTPUT_DIR = "dist"
+
+[tasks.choose-profile.env]
+MODE = "release"
+
+    [tasks.choose-profile.env.debug]
+    MODE = "debug"
+
+[tasks.build-prepare]
+dependencies = ["choose-profile"]
+
+    [tasks.build-prepare.env]
+    RUSTFLAGS = "-Copt-level=s"
+
+        [tasks.build-prepare.env.debug]
+        RUSTFLAGS = ""
+
+[tasks.parse-args]
+script_runner = "@duckscript"
+script = '''
+if not is_empty ${1}
+    set_env PKG ${1}
+end
+'''
+
+
+[tasks.check]
+command = "cargo"
+args = ["check", "--workspace", "--all-targets", "--all-features"]
+
+[tasks.check-pkg]
+command = "cargo"
+args = ["check", "-p", "${PKG}", "--all-targets", "--all-features"]
+dependencies = ["parse-args"]
+
+[tasks.fmt]
+command = "cargo"
+toolchain = "nightly"
+args = ["fmt"]
+
+[tasks.fmt-pkg]
+command = "cargo"
+toolchain = "nightly"
+args = ["fmt", "-p", "${PKG}"]
+dependencies = ["parse-args"]
+
+[tasks.fmt-check]
+extend = "fmt"
+args = ["fmt", "--", "--check"]
+
+[tasks.fmt-check-pkg]
+extend = "fmt-pkg"
+args = ["fmt", "-p", "${PKG}", "--", "--check"]
+
+[tasks.clippy]
+command = "cargo"
+args = ["clippy", "--workspace", "--all-targets", "--all-features"]
+
+[tasks.clippy-pkg]
+command = "cargo"
+args = ["clippy", "-p", "${PKG}", "--", "--no-deps"]
+dependencies = ["parse-args"]
+
+
+[tasks.copy-static]
+script_runner = "@duckscript"
+script = '''
+rm -r ${OUTPUT_DIR}/${WEBAPP_DIR}
+glob_cp ${WEBAPP_DIR}/web/**/* ${OUTPUT_DIR}/${WEBAPP_DIR}/
+'''
+
+
+[tasks.build-app]
+toolchain = "stable"
+command = "cargo"
+args = ["tauri", "build"]
+dependencies = ["build-prepare"]
+
+[tasks.build-app-debug]
+extend = "build-app"
+args = ["tauri", "build", "--debug"]
+
+
+[tasks.build-front-debug]
+toolchain = "stable"
+command = "cargo"
+args = ["build", "-p", "${WEBAPP_NAME}", "--target", "wasm32-unknown-unknown"]
+dependencies = ["build-prepare"]
+
+[tasks.build-front]
+extend = "build-front-debug"
+args = ["build", "-p", "${WEBAPP_NAME}", "--target", "wasm32-unknown-unknown", "--release"]
+
+
+[tasks.deploy-front]
+command = "wasm-bindgen"
+args = [
+    "--target",
+    "web",
+    "--no-typescript",
+    "--out-dir",
+    "${OUTPUT_DIR}/${WEBAPP_DIR}",
+    "--out-name",
+    "${WEBAPP_NAME}",
+    "target/wasm32-unknown-unknown/${MODE}/${WEBAPP_NAME}.wasm",
+]
+dependencies = ["choose-profile", "copy-static"]
+
+[tasks.front]
+run_task = [
+    { name = ["build-front-debug", "deploy-front"], condition = { env = { MODE = "debug" } } },
+    { name = ["build-front", "deploy-front"], condition = { env = { MODE = "release" } } },
+]
+dependencies = ["choose-profile"]
+
+
+[tasks.main]
+env = { WEBAPP_NAME = "${APP_NAME}-main", WEBAPP_DIR = "main" }
+run_task = "front"
+
+[tasks.wapp_a]
+env = { WEBAPP_NAME = "wapp_a", WEBAPP_DIR = "wapp_a" }
+run_task = "front"
+
+
+[tasks.app]
+run_task = [
+    { name = ["build-app-debug"], condition = { env = { MODE = "debug" } } },
+    { name = ["build-app"], condition = { env = { MODE = "release" } } },
+]
+dependencies = ["choose-profile"]
+
+
+[tasks.all]
+dependencies = ["main", "wapp_a", "app"]
+
+[tasks.start]
+env = { RUST_LOG = { value = "info", condition = { env_not_set = ["RUST_LOG"] } } }
+command = "target/${MODE}/${APP_NAME}"
+dependencies = ["choose-profile"]
+
+[tasks.run]
+extend = "start"
+dependencies = ["all"]
