@@ -73,8 +73,8 @@ dependencies = ["parse-args"]
 [tasks.copy-static]
 script_runner = "@duckscript"
 script = '''
-rm -r ${OUTPUT_DIR}/${WEBAPP_DIR}
-glob_cp ${WEBAPP_DIR}/web/**/* ${OUTPUT_DIR}/${WEBAPP_DIR}/
+rm -r ${WEBAPP_OUTPUT_DIR}
+glob_cp ${WEBAPP_NAME}/web/**/* ${WEBAPP_OUTPUT_DIR}/
 '''
 
 
@@ -107,7 +107,7 @@ args = [
     "web",
     "--no-typescript",
     "--out-dir",
-    "${OUTPUT_DIR}/${WEBAPP_DIR}",
+    "${WEBAPP_OUTPUT_DIR}",
     "--out-name",
     "${WEBAPP_NAME}",
     "target/wasm32-unknown-unknown/${MODE}/${WEBAPP_NAME}.wasm",
@@ -123,11 +123,11 @@ dependencies = ["choose-profile"]
 
 
 [tasks.main]
-env = { WEBAPP_NAME = "${APP_NAME}-main", WEBAPP_DIR = "main" }
+env = { WEBAPP_NAME = "main", WEBAPP_OUTPUT_DIR = "${OUTPUT_DIR}" }
 run_task = "front"
 
 [tasks.wapp_a]
-env = { WEBAPP_NAME = "wapp_a", WEBAPP_DIR = "wapp_a" }
+env = { WEBAPP_NAME = "wapp_a", WEBAPP_OUTPUT_DIR = "${OUTPUT_DIR}/wapp_a" }
 run_task = "front"
 
 

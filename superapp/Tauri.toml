@@ -3,7 +3,7 @@ version = "0.1.0"
 identifier = "com.tauri-superapp.app"
 
 [build]
-frontend-dist = "../dist/main"
+frontend-dist = "../dist"
 
 [bundle]
 active = false
